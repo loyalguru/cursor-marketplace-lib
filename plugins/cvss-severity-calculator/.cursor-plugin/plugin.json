@@ -1,0 +1,12 @@
+{
+  "name": "cvss-severity-calculator",
+  "displayName": "CVSS Severity Calculator",
+  "version": "0.1.0",
+  "description": "Calculate vulnerability severity consistently with CVSS v4.0 guidance for Loyal Guru security workflows.",
+  "author": {
+    "name": "Loyal Guru",
+    "email": "platform@loyal.guru"
+  },
+  "license": "MIT",
+  "keywords": ["cursor", "plugin", "security", "cvss", "vulnerability"]
+}
