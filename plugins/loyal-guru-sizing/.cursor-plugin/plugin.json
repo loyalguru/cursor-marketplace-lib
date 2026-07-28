@@ -1,0 +1,12 @@
+{
+  "name": "loyal-guru-sizing",
+  "displayName": "Loyal Guru Sizing",
+  "version": "0.1.0",
+  "description": "Estimate engineering effort with Loyal Guru's T-Size / Fibonacci SP / time scale and write it to Jira.",
+  "author": {
+    "name": "Loyal Guru",
+    "email": "platform@loyal.guru"
+  },
+  "license": "MIT",
+  "keywords": ["cursor", "plugin", "sizing", "t-size", "jira", "estimation"]
+}
