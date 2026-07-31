@@ -1,0 +1,12 @@
+{
+  "name": "productivity",
+  "displayName": "Productivity",
+  "version": "0.1.0",
+  "description": "Productivity workflows for structured planning interviews and decision stress-testing.",
+  "author": {
+    "name": "Loyal Guru",
+    "email": "platform@loyal.guru"
+  },
+  "license": "MIT",
+  "keywords": ["cursor", "plugin", "productivity", "planning", "interview"]
+}

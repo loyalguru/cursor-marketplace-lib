@@ -12,6 +12,7 @@ Registered in `marketplace.json` and available to all team members:
 - **planning**: Strategic planning workflows including devil's advocate analysis for decision making
 - **cvss-severity-calculator**: CVSS v4.0 severity calculation for security findings
 - **loyal-guru-sizing**: T-Size estimation for Jira tickets (Loyal Guru scale)
+- **productivity**: Structured planning interviews and decision stress-testing workflows
 
 ## Available plugins
 
