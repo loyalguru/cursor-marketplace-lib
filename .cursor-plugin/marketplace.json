@@ -34,6 +34,11 @@
         "name": "cvss-severity-calculator",
         "source": "cvss-severity-calculator",
         "description": "CVSS v4.0 severity calculation workflow for Loyal Guru security findings"
+      },
+      {
+        "name": "loyal-guru-sizing",
+        "source": "loyal-guru-sizing",
+        "description": "T-Size estimation for Jira tickets using Loyal Guru's sizing scale"
       }
     ]
   }
