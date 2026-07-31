@@ -39,6 +39,11 @@
         "name": "loyal-guru-sizing",
         "source": "loyal-guru-sizing",
         "description": "T-Size estimation for Jira tickets using Loyal Guru's sizing scale"
+      },
+      {
+        "name": "productivity",
+        "source": "productivity",
+        "description": "Structured planning interviews and decision stress-testing workflows"
       }
     ]
   }
