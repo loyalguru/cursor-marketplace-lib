@@ -39,6 +39,11 @@
         "name": "loyal-guru-sizing",
         "source": "loyal-guru-sizing",
         "description": "T-Size estimation for Jira tickets using Loyal Guru's sizing scale"
+      },
+      {
+        "name": "semgrep-vulnerability-triage",
+        "source": "semgrep-vulnerability-triage",
+        "description": "Semgrep triage, reachability validation, CVSS scoring, and Jira synchronization"
       }
     ]
   }
