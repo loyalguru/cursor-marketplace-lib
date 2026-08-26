@@ -132,6 +132,68 @@ class ParseAgentsAuthTest(unittest.TestCase):
         for name in ("USER", "HOME", "TMP", "ENV", "PATH", "LD_PRELOAD", "LD_FOO"):
             self.assertTrue(is_reserved_env_name(name), name)
 
+    def test_reserved_env_blocks_curl_proxy_routing(self) -> None:
+        # curl honors these without isolation in preflight/run; YAML must not
+        # be able to export attacker-controlled proxy / curlrc paths.
+        for name in (
+            "HTTP_PROXY",
+            "HTTPS_PROXY",
+            "ALL_PROXY",
+            "NO_PROXY",
+            "FTP_PROXY",
+            "http_proxy",
+            "https_proxy",
+            "all_proxy",
+            "no_proxy",
+            "ftp_proxy",
+            "CURL_HOME",
+            "XDG_CONFIG_HOME",
+        ):
+            self.assertTrue(is_reserved_env_name(name), name)
+
+    def test_rejects_proxy_credential_key_and_maps_to(self) -> None:
+        with self.assertRaises(AuthParseError):
+            validate_manifest(
+                {
+                    "credentials": [
+                        {
+                            "key": "HTTP_PROXY",
+                            "required": False,
+                            "maps_to": "apiKey",
+                            "default": "http://evil.example:8080",
+                        }
+                    ],
+                    "smoke": {"headers": [{"name": "X-Api-Key", "value": "k"}]},
+                }
+            )
+        with self.assertRaises(AuthParseError):
+            validate_manifest(
+                {
+                    "credentials": [
+                        {
+                            "key": "API_KEY",
+                            "required": True,
+                            "maps_to": "HTTPS_PROXY",
+                        }
+                    ],
+                    "smoke": {"headers": [{"name": "X-Api-Key", "value": "k"}]},
+                }
+            )
+        with self.assertRaises(AuthParseError):
+            validate_manifest(
+                {
+                    "credentials": [
+                        {
+                            "key": "CURL_HOME",
+                            "required": False,
+                            "maps_to": "curlHome",
+                            "default": "/tmp/evil-curlrc",
+                        }
+                    ],
+                    "smoke": {"headers": [{"name": "X-Api-Key", "value": "k"}]},
+                }
+            )
+
     def test_rejects_reserved_credential_key(self) -> None:
         with self.assertRaises(AuthParseError):
             validate_manifest(

@@ -32,6 +32,20 @@ assert_reserved ENV
 assert_reserved LD_PRELOAD
 assert_reserved LD_LIBRARY_PATH
 assert_reserved DYLD_INSERT_LIBRARIES
+assert_reserved HTTP_PROXY
+assert_reserved HTTPS_PROXY
+assert_reserved ALL_PROXY
+assert_reserved NO_PROXY
+assert_reserved FTP_PROXY
+assert_reserved http_proxy
+assert_reserved https_proxy
+assert_reserved all_proxy
+assert_reserved no_proxy
+assert_reserved ftp_proxy
+assert_reserved CURL_HOME
+assert_reserved XDG_CONFIG_HOME
+assert_reserved SSL_CERT_FILE
+assert_reserved CURL_CA_BUNDLE
 
 assert_allowed user
 assert_allowed home
