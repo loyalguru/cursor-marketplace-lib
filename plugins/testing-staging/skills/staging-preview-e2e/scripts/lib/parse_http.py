@@ -18,7 +18,7 @@ FORBIDDEN = [
     (re.compile(r"(?i)^\s*###\s*script", re.M), "script sections"),
 ]
 METHOD_RE = re.compile(r"^(GET|POST|PUT|PATCH|DELETE)\s+(\S+)\s*$")
-HEADER_RE = re.compile(r"^([A-Za-z0-9\-]+):\s*(.*)$")
+HEADER_RE = re.compile(r"^((?:\{\{[A-Za-z0-9_]+\}\}|[A-Za-z0-9\-]+)):\s*(.*)$")
 EXPECT_STATUS_RE = re.compile(r"^#\s*@expect\s+status\s+(\d+)\s*$")
 EXPECT_JSONPATH_EQ_RE = re.compile(
     r"^#\s*@expect\s+jsonpath\s+(\S+)\s+==\s+(.+?)\s*$"
