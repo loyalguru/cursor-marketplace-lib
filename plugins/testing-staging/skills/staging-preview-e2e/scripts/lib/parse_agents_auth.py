@@ -76,10 +76,11 @@ class AuthParseError(ValueError):
 
 
 def is_reserved_env_name(name: str) -> bool:
-    upper = name.upper()
-    if upper in RESERVED_ENV_NAMES:
+    # Exact match only: Unix env names are case-sensitive, so fixture / maps_to
+    # ids like user, home, tmp, env, path must not be treated as USER/HOME/etc.
+    if name in RESERVED_ENV_NAMES:
         return True
-    return upper.startswith(RESERVED_ENV_PREFIXES)
+    return name.startswith(RESERVED_ENV_PREFIXES)
 
 
 def assert_safe_header_name(name: str, where: str) -> str:

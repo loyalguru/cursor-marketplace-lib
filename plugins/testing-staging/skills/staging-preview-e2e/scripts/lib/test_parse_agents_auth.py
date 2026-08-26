@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from parse_agents_auth import (  # noqa: E402
     AuthParseError,
+    is_reserved_env_name,
     parse_agents_file,
     parse_simple_yaml,
     validate_manifest,
@@ -124,6 +125,13 @@ class ParseAgentsAuthTest(unittest.TestCase):
         )
         self.assertEqual(data["credentials"][0]["key"], "A")
 
+    def test_reserved_env_is_case_sensitive(self) -> None:
+        # Unix env names are case-sensitive; lowercase fixture/maps_to ids are fine.
+        for name in ("user", "home", "tmp", "env", "path", "Path", "User"):
+            self.assertFalse(is_reserved_env_name(name), name)
+        for name in ("USER", "HOME", "TMP", "ENV", "PATH", "LD_PRELOAD", "LD_FOO"):
+            self.assertTrue(is_reserved_env_name(name), name)
+
     def test_rejects_reserved_credential_key(self) -> None:
         with self.assertRaises(AuthParseError):
             validate_manifest(
@@ -139,6 +147,20 @@ class ParseAgentsAuthTest(unittest.TestCase):
                     "smoke": {"headers": [{"name": "X-Api-Key", "value": "k"}]},
                 }
             )
+
+    def test_allows_lowercase_maps_to_like_user(self) -> None:
+        validate_manifest(
+            {
+                "credentials": [
+                    {
+                        "key": "API_USER",
+                        "required": True,
+                        "maps_to": "user",
+                    }
+                ],
+                "smoke": {"headers": [{"name": "X-Api-Key", "value": "k"}]},
+            }
+        )
 
     def test_rejects_reserved_maps_to(self) -> None:
         with self.assertRaises(AuthParseError):

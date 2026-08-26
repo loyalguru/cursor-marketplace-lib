@@ -2,10 +2,10 @@
 # Block env names that must never be exported from AGENTS.md / preview.json.
 
 e2e_is_reserved_env_key() {
+  # Exact match only: Unix env names are case-sensitive, so fixture / maps_to
+  # ids like user, home, tmp, env, path must not be treated as USER/HOME/etc.
   local key="$1"
-  local upper
-  upper="$(printf '%s' "$key" | tr '[:lower:]' '[:upper:]')"
-  case "$upper" in
+  case "$key" in
     PATH|LD_PRELOAD|LD_LIBRARY_PATH|LD_AUDIT|\
     DYLD_INSERT_LIBRARIES|DYLD_LIBRARY_PATH|DYLD_FRAMEWORK_PATH|\
     PYTHONPATH|PYTHONHOME|PYTHONSTARTUP|PYTHONUSERBASE|\
@@ -18,7 +18,7 @@ e2e_is_reserved_env_key() {
       return 0
       ;;
   esac
-  case "$upper" in
+  case "$key" in
     DYLD_*|BASH_FUNC_*|LD_*)
       return 0
       ;;
