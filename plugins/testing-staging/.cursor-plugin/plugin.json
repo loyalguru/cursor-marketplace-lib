@@ -1,0 +1,12 @@
+{
+  "name": "testing-staging",
+  "displayName": "Testing Staging",
+  "version": "0.1.0",
+  "description": "QA the active PR on preview/staging: coverage matrix, HTTP e2e, Sentry, and reporting.",
+  "author": {
+    "name": "Loyal Guru",
+    "email": "platform@loyal.guru"
+  },
+  "license": "MIT",
+  "keywords": ["cursor", "plugin", "testing", "staging", "preview", "e2e", "qa"]
+}

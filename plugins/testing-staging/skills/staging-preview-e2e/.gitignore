@@ -1,0 +1,3 @@
+scripts/lib/__pycache__/*
+state/*/
+!state/.gitkeep

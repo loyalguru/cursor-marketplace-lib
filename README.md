@@ -9,6 +9,7 @@ Registered in `marketplace.json` and available to all team members:
 - **git-workflows**: Commit, PR, CI, merge conflict, and branch validation workflows
 - **pm**: Ticket-oriented PM workflows with MCP integration, ticket writing, and board summarization
 - **testing-reliability**: Datadog dashboards, performance optimization, and testing agents
+- **testing-staging**: Staging/preview E2E QA for the active PR
 - **planning**: Strategic planning workflows including devil's advocate analysis for decision making
 - **cvss-severity-calculator**: CVSS v4.0 severity calculation for security findings
 - **loyal-guru-sizing**: T-Size estimation for Jira tickets (Loyal Guru scale)

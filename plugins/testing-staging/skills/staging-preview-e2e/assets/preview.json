@@ -1,0 +1,8 @@
+{
+  "baseUrl": "",
+  "gcp": {
+    "project": "",
+    "region": "",
+    "service": ""
+  }
+}

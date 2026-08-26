@@ -44,6 +44,11 @@
         "name": "productivity",
         "source": "productivity",
         "description": "Structured planning interviews and decision stress-testing workflows"
+      },
+      {
+        "name": "testing-staging",
+        "source": "testing-staging",
+        "description": "Staging/preview E2E QA for the active PR: coverage matrix, HTTP cases, Sentry, and reporting"
       }
     ]
   }
