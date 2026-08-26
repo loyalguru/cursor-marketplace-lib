@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
 # Block env names that must never be exported from AGENTS.md / preview.json.
+# Isolate Python from the application-repo cwd after secrets are loaded.
+
+e2e_python() {
+  # -I: no cwd on sys.path for -c/-, ignore PYTHON*, skip site/sitecustomize.
+  # Prevents a PR under QA from planting json.py / sitecustomize.py to read
+  # exported preview credentials from the operator process environment.
+  python3 -I "$@"
+}
 
 e2e_is_reserved_env_key() {
   # Exact match only: Unix env names are case-sensitive, so fixture / maps_to

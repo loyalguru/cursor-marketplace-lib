@@ -2,6 +2,10 @@
 # Resolve STATE_DIR for the repo under test outside the plugin cache.
 # Default: ${XDG_STATE_HOME:-$HOME/.local/state}/cursor-staging-preview-e2e/{repo}
 
+_E2E_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=/dev/null
+source "${_E2E_LIB_DIR}/safe_env.sh"
+
 e2e_default_state_root() {
   if [[ -n "${E2E_STATE_ROOT:-}" ]]; then
     printf '%s\n' "$E2E_STATE_ROOT"
@@ -20,7 +24,7 @@ e2e_repo_slug_from_git() {
   if [[ -z "$origin" ]]; then
     return 1
   fi
-  slug="$(python3 "${SCRIPT_DIR}/lib/resolve_project.py" "$origin" 2>/dev/null || true)"
+  slug="$(e2e_python "${_E2E_LIB_DIR}/resolve_project.py" "$origin" 2>/dev/null || true)"
   if [[ -z "$slug" ]]; then
     return 1
   fi

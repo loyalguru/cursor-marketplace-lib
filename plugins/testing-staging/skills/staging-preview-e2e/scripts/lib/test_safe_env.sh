@@ -62,6 +62,77 @@ assert_allowed ld_preload
 assert_allowed baseUrl
 assert_allowed apiKey
 
+# python3 -c / python3 - put cwd on sys.path and load site; a PR under QA can
+# plant json.py or sitecustomize.py after e2e_load_env exported secrets.
+if ! declare -F e2e_python >/dev/null; then
+  echo "FAIL: e2e_python helper missing" >&2
+  fail=1
+else
+  hijack_dir="$(mktemp -d)"
+  marker="${hijack_dir}/pwned"
+  cat >"${hijack_dir}/json.py" <<'PY'
+import os
+from pathlib import Path
+Path(os.environ["E2E_PWN_MARKER"]).write_text("pwned\n", encoding="utf-8")
+raise SystemExit("hijacked json")
+PY
+  cat >"${hijack_dir}/sitecustomize.py" <<'PY'
+import os
+from pathlib import Path
+Path(os.environ["E2E_PWN_MARKER"]).write_text("sitecustomize\n", encoding="utf-8")
+PY
+
+  (
+    cd "$hijack_dir"
+    export E2E_PWN_MARKER="$marker"
+    export PREVIEW_SECRET=should-not-leak
+    # Unprotected python3 -c is the regression baseline (must be hijackable).
+    rm -f "$marker"
+    python3 -c 'import json,sys; print(len(json.load(sys.stdin)))' <<<"[]" >/dev/null 2>&1 || true
+    if [[ ! -f "$marker" ]]; then
+      echo "FAIL: baseline python3 -c did not load cwd json.py (test invalid)" >&2
+      exit 1
+    fi
+    rm -f "$marker"
+    if ! out="$(e2e_python -c 'import json,sys; print(len(json.load(sys.stdin)))' <<<"[]" 2>&1)"; then
+      echo "FAIL: e2e_python -c failed: ${out}" >&2
+      exit 1
+    fi
+    if [[ "$out" != "0" ]]; then
+      echo "FAIL: e2e_python -c unexpected output: ${out}" >&2
+      exit 1
+    fi
+    if [[ -f "$marker" ]]; then
+      echo "FAIL: e2e_python -c executed cwd json.py" >&2
+      exit 1
+    fi
+    rm -f "$marker"
+    if ! e2e_python -c 'print("ok")' >/dev/null; then
+      echo "FAIL: e2e_python -c print failed" >&2
+      exit 1
+    fi
+    if [[ -f "$marker" ]]; then
+      echo "FAIL: e2e_python -c executed cwd sitecustomize.py" >&2
+      exit 1
+    fi
+    rm -f "$marker"
+    if ! e2e_python - >/dev/null <<'PY'
+import json
+assert json.loads("[]") == []
+print("ok")
+PY
+    then
+      echo "FAIL: e2e_python - (stdin) failed" >&2
+      exit 1
+    fi
+    if [[ -f "$marker" ]]; then
+      echo "FAIL: e2e_python - executed cwd json.py" >&2
+      exit 1
+    fi
+  ) || fail=1
+  rm -rf "$hijack_dir"
+fi
+
 if [[ "$fail" -ne 0 ]]; then
   exit 1
 fi

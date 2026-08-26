@@ -113,33 +113,33 @@ if [[ "$SKIP_PREFLIGHT" -eq 0 ]]; then
   fi
 fi
 
-CASES_JSON="$(python3 "${SCRIPT_DIR}/lib/parse_http.py" "${HTTP_FILES[@]}")"
-CASE_COUNT="$(python3 -c 'import json,sys; print(len(json.load(sys.stdin)))' <<<"$CASES_JSON")"
+CASES_JSON="$(e2e_python "${SCRIPT_DIR}/lib/parse_http.py" "${HTTP_FILES[@]}")"
+CASE_COUNT="$(e2e_python -c 'import json,sys; print(len(json.load(sys.stdin)))' <<<"$CASES_JSON")"
 
 pass=0
 fail=0
 echo "baseUrl=${baseUrl} smokePath=${smokePath} cases=${CASE_COUNT}"
 
 for ((i = 0; i < CASE_COUNT; i++)); do
-  case_json="$(python3 -c 'import json,sys; print(json.dumps(json.load(sys.stdin)[int(sys.argv[1])]))' "$i" <<<"$CASES_JSON")"
-  name="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["name"])' <<<"$case_json")"
-  method="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["method"])' <<<"$case_json")"
-  url_tmpl="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["url"])' <<<"$case_json")"
-  body_tmpl="$(python3 -c 'import json,sys; print(json.load(sys.stdin).get("body") or "")' <<<"$case_json")"
-  expects_tmpl="$(python3 -c 'import json,sys; print(json.dumps(json.load(sys.stdin)["expects"]))' <<<"$case_json")"
-  headers_json="$(python3 -c 'import json,sys; print(json.dumps(json.load(sys.stdin)["headers"]))' <<<"$case_json")"
+  case_json="$(e2e_python -c 'import json,sys; print(json.dumps(json.load(sys.stdin)[int(sys.argv[1])]))' "$i" <<<"$CASES_JSON")"
+  name="$(e2e_python -c 'import json,sys; print(json.load(sys.stdin)["name"])' <<<"$case_json")"
+  method="$(e2e_python -c 'import json,sys; print(json.load(sys.stdin)["method"])' <<<"$case_json")"
+  url_tmpl="$(e2e_python -c 'import json,sys; print(json.load(sys.stdin)["url"])' <<<"$case_json")"
+  body_tmpl="$(e2e_python -c 'import json,sys; print(json.load(sys.stdin).get("body") or "")' <<<"$case_json")"
+  expects_tmpl="$(e2e_python -c 'import json,sys; print(json.dumps(json.load(sys.stdin)["expects"]))' <<<"$case_json")"
+  headers_json="$(e2e_python -c 'import json,sys; print(json.dumps(json.load(sys.stdin)["headers"]))' <<<"$case_json")"
 
-  if ! expects_json="$(printf '%s' "$expects_tmpl" | python3 "${SCRIPT_DIR}/lib/substitute_and_assert.py" substitute)"; then
+  if ! expects_json="$(printf '%s' "$expects_tmpl" | e2e_python "${SCRIPT_DIR}/lib/substitute_and_assert.py" substitute)"; then
     echo -e "FAIL\t-\t${name}\tunresolved variables in @expect"
     fail=$((fail + 1))
     continue
   fi
-  if ! url="$(printf '%s' "$url_tmpl" | python3 "${SCRIPT_DIR}/lib/substitute_and_assert.py" substitute)"; then
+  if ! url="$(printf '%s' "$url_tmpl" | e2e_python "${SCRIPT_DIR}/lib/substitute_and_assert.py" substitute)"; then
     echo -e "FAIL\t-\t${name}\tunresolved variables in URL"
     fail=$((fail + 1))
     continue
   fi
-  if ! python3 "${SCRIPT_DIR}/lib/substitute_and_assert.py" check-url "$baseUrl" "$url"; then
+  if ! e2e_python "${SCRIPT_DIR}/lib/substitute_and_assert.py" check-url "$baseUrl" "$url"; then
     echo -e "FAIL\t-\t${name}\tURL rejected (must be same origin as baseUrl)"
     fail=$((fail + 1))
     continue
@@ -148,22 +148,22 @@ for ((i = 0; i < CASE_COUNT; i++)); do
   declare -a curl_headers=()
   declare -a curl_extra=()
   declare -a case_header_names=()
-  header_count="$(python3 -c 'import json,sys; print(len(json.load(sys.stdin)))' <<<"$headers_json")"
+  header_count="$(e2e_python -c 'import json,sys; print(len(json.load(sys.stdin)))' <<<"$headers_json")"
   header_err=0
   for ((h = 0; h < header_count; h++)); do
-    header_name_tmpl="$(python3 -c 'import json,sys; print(json.load(sys.stdin)[int(sys.argv[1])][0])' "$h" <<<"$headers_json")"
-    header_tmpl="$(python3 -c 'import json,sys; print(json.load(sys.stdin)[int(sys.argv[1])][1])' "$h" <<<"$headers_json")"
-    if ! header_name="$(printf '%s' "$header_name_tmpl" | python3 "${SCRIPT_DIR}/lib/substitute_and_assert.py" substitute)"; then
+    header_name_tmpl="$(e2e_python -c 'import json,sys; print(json.load(sys.stdin)[int(sys.argv[1])][0])' "$h" <<<"$headers_json")"
+    header_tmpl="$(e2e_python -c 'import json,sys; print(json.load(sys.stdin)[int(sys.argv[1])][1])' "$h" <<<"$headers_json")"
+    if ! header_name="$(printf '%s' "$header_name_tmpl" | e2e_python "${SCRIPT_DIR}/lib/substitute_and_assert.py" substitute)"; then
       echo -e "FAIL\t-\t${name}\tunresolved variables in header name"
       header_err=1
       break
     fi
-    if ! header_value="$(printf '%s' "$header_tmpl" | python3 "${SCRIPT_DIR}/lib/substitute_and_assert.py" substitute)"; then
+    if ! header_value="$(printf '%s' "$header_tmpl" | e2e_python "${SCRIPT_DIR}/lib/substitute_and_assert.py" substitute)"; then
       echo -e "FAIL\t-\t${name}\tunresolved variables in header ${header_name}"
       header_err=1
       break
     fi
-    if ! python3 "${SCRIPT_DIR}/lib/substitute_and_assert.py" check-header \
+    if ! e2e_python "${SCRIPT_DIR}/lib/substitute_and_assert.py" check-header \
       "$header_name" "$header_value"; then
       echo -e "FAIL\t-\t${name}\tunsafe header ${header_name}"
       header_err=1
@@ -178,11 +178,11 @@ for ((i = 0; i < CASE_COUNT; i++)); do
   fi
 
   # Inject AGENTS.md auth (headers / Basic) unless case already set the header.
-  inject="$(python3 -c 'import json,sys; print("1" if json.load(open(sys.argv[1])).get("inject_auth_on_requests",True) else "0")' "${E2E_AUTH_MANIFEST:-${STATE_DIR}/auth.manifest.json}")"
+  inject="$(e2e_python -c 'import json,sys; print("1" if json.load(open(sys.argv[1])).get("inject_auth_on_requests",True) else "0")' "${E2E_AUTH_MANIFEST:-${STATE_DIR}/auth.manifest.json}")"
   if [[ "$inject" == "1" ]]; then
     skip_csv="$(IFS=,; echo "${case_header_names[*]}")"
     auth_file="$(mktemp)"
-    if python3 "${SCRIPT_DIR}/lib/build_curl_auth.py" \
+    if e2e_python "${SCRIPT_DIR}/lib/build_curl_auth.py" \
       "${E2E_AUTH_MANIFEST:-${STATE_DIR}/auth.manifest.json}" \
       --skip-names "$skip_csv" >"$auth_file"; then
       while IFS=$'\t' read -r kind hname hval; do
@@ -202,12 +202,12 @@ for ((i = 0; i < CASE_COUNT; i++)); do
 
   body=""
   if [[ -n "$body_tmpl" ]]; then
-    if ! body="$(printf '%s' "$body_tmpl" | python3 "${SCRIPT_DIR}/lib/substitute_and_assert.py" substitute)"; then
+    if ! body="$(printf '%s' "$body_tmpl" | e2e_python "${SCRIPT_DIR}/lib/substitute_and_assert.py" substitute)"; then
       echo -e "FAIL\t-\t${name}\tunresolved variables in body"
       fail=$((fail + 1))
       continue
     fi
-    if ! printf '%s' "$body" | python3 "${SCRIPT_DIR}/lib/substitute_and_assert.py" check-body; then
+    if ! printf '%s' "$body" | e2e_python "${SCRIPT_DIR}/lib/substitute_and_assert.py" check-body; then
       echo -e "FAIL\t-\t${name}\trefusing curl @filepath body"
       fail=$((fail + 1))
       continue
@@ -228,12 +228,12 @@ for ((i = 0; i < CASE_COUNT; i++)); do
   fi
 
   assert_output="$(mktemp)"
-  if python3 "${SCRIPT_DIR}/lib/substitute_and_assert.py" assert "$code" "$expects_json" <"$response_file" >"$assert_output" 2>&1; then
-    echo -e "PASS\t${code}\t${name}\t$(python3 "${SCRIPT_DIR}/lib/substitute_and_assert.py" redact-log <"$response_file")"
+  if e2e_python "${SCRIPT_DIR}/lib/substitute_and_assert.py" assert "$code" "$expects_json" <"$response_file" >"$assert_output" 2>&1; then
+    echo -e "PASS\t${code}\t${name}\t$(e2e_python "${SCRIPT_DIR}/lib/substitute_and_assert.py" redact-log <"$response_file")"
     pass=$((pass + 1))
   else
     message="$(cat "$assert_output" 2>/dev/null || true)"
-    echo -e "FAIL\t${code}\t${name}\t${message}\t$(python3 "${SCRIPT_DIR}/lib/substitute_and_assert.py" redact-log <"$response_file")"
+    echo -e "FAIL\t${code}\t${name}\t${message}\t$(e2e_python "${SCRIPT_DIR}/lib/substitute_and_assert.py" redact-log <"$response_file")"
     fail=$((fail + 1))
   fi
   rm -f "$response_file" "$assert_output"

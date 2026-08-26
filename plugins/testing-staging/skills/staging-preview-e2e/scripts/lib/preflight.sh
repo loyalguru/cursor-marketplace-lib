@@ -15,7 +15,7 @@ e2e_preflight() {
     while IFS= read -r line; do
       [[ -n "$line" ]] && required_vars+=("$line")
     done < <(
-      python3 "${SCRIPT_DIR}/lib/required_variables.py" \
+      e2e_python "${SCRIPT_DIR}/lib/required_variables.py" \
         --manifest "$manifest" \
         "${http_files[@]}"
     )
@@ -35,7 +35,7 @@ e2e_preflight() {
 
   # Session vars required by bearer flows must be present before L0/live.
   local session_miss
-  session_miss="$(python3 - "$manifest" <<'PY'
+  session_miss="$(e2e_python - "$manifest" <<'PY'
 import json, os, sys
 from pathlib import Path
 m = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
@@ -61,14 +61,14 @@ PY
       ;;
   esac
 
-  if ! python3 "${SCRIPT_DIR}/lib/substitute_and_assert.py" check-url "$baseUrl" "$smoke_url"; then
+  if ! e2e_python "${SCRIPT_DIR}/lib/substitute_and_assert.py" check-url "$baseUrl" "$smoke_url"; then
     echo "DATA_STALE: smoke URL rejected (must be same origin as baseUrl)" >&2
     return 2
   fi
 
   local curl_args_file
   curl_args_file="$(mktemp)"
-  if ! python3 "${SCRIPT_DIR}/lib/build_curl_auth.py" "$manifest" >"$curl_args_file"; then
+  if ! e2e_python "${SCRIPT_DIR}/lib/build_curl_auth.py" "$manifest" >"$curl_args_file"; then
     rm -f "$curl_args_file"
     echo "DATA_STALE: failed to build smoke auth from AGENTS.md manifest" >&2
     return 2

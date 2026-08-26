@@ -81,7 +81,7 @@ step_agents() {
   if [[ -z "$AGENTS_PATH" || ! -f "$AGENTS_PATH" ]]; then
     fail "missing e2e_tests/AGENTS.md (expected ${AGENTS_PATH:-unknown}). Copy assets/agents-authentication.example.md or AGENTS.*.example.md into the app repo."
   fi
-  if ! python3 "${SCRIPT_DIR}/lib/parse_agents_auth.py" "$AGENTS_PATH" >/dev/null; then
+  if ! e2e_python "${SCRIPT_DIR}/lib/parse_agents_auth.py" "$AGENTS_PATH" >/dev/null; then
     fail "AGENTS.md ## Authentication YAML invalid — fix it before continuing"
   fi
   ok "AGENTS.md Authentication parseable at ${AGENTS_PATH}"
@@ -104,7 +104,7 @@ step_credential() {
   [[ -f "$MANIFEST" ]] || fail "missing manifest ${MANIFEST}"
   [[ -f "$ENV_FILE" ]] || fail "missing ${ENV_FILE}"
 
-  python3 - "$MANIFEST" "$ENV_FILE" "$CRED_KEY" <<'PY' || exit 1
+  e2e_python - "$MANIFEST" "$ENV_FILE" "$CRED_KEY" <<'PY' || exit 1
 import json, sys
 from pathlib import Path
 
@@ -145,7 +145,7 @@ PY
 
 step_base_url() {
   [[ -f "$VARS_FILE" ]] || fail "missing ${VARS_FILE}"
-  python3 - "$VARS_FILE" <<'PY' || exit 1
+  e2e_python - "$VARS_FILE" <<'PY' || exit 1
 import json, sys
 from pathlib import Path
 from urllib.parse import urlparse
@@ -166,7 +166,7 @@ PY
 step_session() {
   [[ -f "$MANIFEST" ]] || fail "missing ${MANIFEST}"
   [[ -f "$VARS_FILE" ]] || fail "missing ${VARS_FILE}"
-  python3 - "$MANIFEST" "$VARS_FILE" "${SCRIPT_DIR}/lib/flatten_variables.py" <<'PY' || exit 1
+  e2e_python - "$MANIFEST" "$VARS_FILE" "${SCRIPT_DIR}/lib/flatten_variables.py" <<'PY' || exit 1
 import importlib.util, json, sys
 from pathlib import Path
 
@@ -205,12 +205,12 @@ case "$STEP" in
     if [[ -z "$AGENTS_PATH" || ! -f "$AGENTS_PATH" ]]; then
       fail "missing e2e_tests/AGENTS.md"
     fi
-    python3 "${SCRIPT_DIR}/lib/parse_agents_auth.py" "$AGENTS_PATH" >/dev/null \
+    e2e_python "${SCRIPT_DIR}/lib/parse_agents_auth.py" "$AGENTS_PATH" >/dev/null \
       || fail "AGENTS.md Authentication invalid"
     [[ -f "$ENV_FILE" ]] || fail "missing ${ENV_FILE}"
     [[ -f "$VARS_FILE" ]] || fail "missing ${VARS_FILE}"
     [[ -f "$MANIFEST" ]] || fail "missing ${MANIFEST}"
-    python3 - "$MANIFEST" "$ENV_FILE" <<'PY' || exit 1
+    e2e_python - "$MANIFEST" "$ENV_FILE" <<'PY' || exit 1
 import json, sys
 from pathlib import Path
 manifest = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
@@ -233,7 +233,7 @@ if missing:
     print("SETUP_INCOMPLETE: required credentials empty: " + ",".join(missing), file=sys.stderr)
     sys.exit(1)
 PY
-    python3 - "$VARS_FILE" <<'PY' || exit 1
+    e2e_python - "$VARS_FILE" <<'PY' || exit 1
 import json, sys
 from pathlib import Path
 from urllib.parse import urlparse
@@ -247,7 +247,7 @@ if parsed.scheme not in ("http", "https") or not parsed.netloc:
     print("SETUP_INCOMPLETE: baseUrl must be http(s) URL with host", file=sys.stderr)
     sys.exit(1)
 PY
-    python3 - "$MANIFEST" "$VARS_FILE" "${SCRIPT_DIR}/lib/flatten_variables.py" <<'PY' || exit 1
+    e2e_python - "$MANIFEST" "$VARS_FILE" "${SCRIPT_DIR}/lib/flatten_variables.py" <<'PY' || exit 1
 import importlib.util, json, sys
 from pathlib import Path
 manifest = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))

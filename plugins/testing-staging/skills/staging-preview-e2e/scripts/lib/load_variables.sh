@@ -15,7 +15,7 @@ e2e_load_variables() {
   local -a loaded_keys=()
   tmp="$(mktemp)"
 
-  if ! python3 "${SCRIPT_DIR}/lib/flatten_variables.py" "$E2E_VARS_FILE" --null >"$tmp"; then
+  if ! e2e_python "${SCRIPT_DIR}/lib/flatten_variables.py" "$E2E_VARS_FILE" --null >"$tmp"; then
     rm -f "$tmp"
     echo "DATA_STALE: failed to parse ${E2E_VARS_FILE}" >&2
     return 2

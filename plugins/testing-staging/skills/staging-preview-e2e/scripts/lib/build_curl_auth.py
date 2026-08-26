@@ -15,7 +15,10 @@ import os
 import sys
 from pathlib import Path
 
-from parse_agents_auth import assert_safe_header_name, assert_safe_header_value
+# python3 -I omits the script directory from sys.path; keep sibling imports.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from parse_agents_auth import assert_safe_header_name, assert_safe_header_value  # noqa: E402
 
 
 def resolve(name: str) -> str:

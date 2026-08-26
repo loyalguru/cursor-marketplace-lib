@@ -34,13 +34,13 @@ fi
 umask 077
 
 # One-shot: migrate flat state/ into state/{repo}/ when present (stable + legacy).
-python3 "${SCRIPT_DIR}/lib/migrate_flat_state.py" "$STATE_ROOT" "$STATE_DIR"
-python3 "${SCRIPT_DIR}/lib/migrate_flat_state.py" "$LEGACY_STATE_ROOT" "$STATE_DIR"
+e2e_python "${SCRIPT_DIR}/lib/migrate_flat_state.py" "$STATE_ROOT" "$STATE_DIR"
+e2e_python "${SCRIPT_DIR}/lib/migrate_flat_state.py" "$LEGACY_STATE_ROOT" "$STATE_DIR"
 
 mkdir -p "${STATE_DIR}/variables"
 
 # Parse AGENTS.md → auth.manifest.json (no secrets).
-if ! python3 "${SCRIPT_DIR}/lib/parse_agents_auth.py" "$AGENTS_PATH" \
+if ! e2e_python "${SCRIPT_DIR}/lib/parse_agents_auth.py" "$AGENTS_PATH" \
   --write-manifest "${STATE_DIR}/auth.manifest.json"; then
   echo "ERROR: failed to parse ## Authentication in ${AGENTS_PATH}" >&2
   exit 1
@@ -49,7 +49,7 @@ echo "Wrote ${STATE_DIR}/auth.manifest.json from ${AGENTS_PATH}"
 
 if [[ ! -f "${STATE_DIR}/.env" ]]; then
   # Seed empty keys declared in AGENTS.md credentials.
-  python3 - "${STATE_DIR}/auth.manifest.json" "${STATE_DIR}/.env" <<'PY'
+  e2e_python - "${STATE_DIR}/auth.manifest.json" "${STATE_DIR}/.env" <<'PY'
 import json, sys
 from pathlib import Path
 manifest = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))

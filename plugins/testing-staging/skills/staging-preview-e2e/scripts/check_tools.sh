@@ -225,7 +225,8 @@ if ((${#missing[@]} > 0)); then
 fi
 
 # Runner scripts need Python 3.9+ (zoneinfo) and stdlib imports used by lib/.
-if ! python3 - <<'PY'
+# Use -I so a planted cwd sitecustomize/json cannot run during the tool check.
+if ! python3 -I - <<'PY'
 import sys
 if sys.version_info < (3, 9):
     sys.stderr.write(

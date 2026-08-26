@@ -22,7 +22,7 @@ e2e_load_env() {
 
   local tmp
   tmp="$(mktemp)"
-  if ! python3 - "$manifest" "$E2E_ENV_FILE" <<'PY' >"$tmp"
+  if ! e2e_python - "$manifest" "$E2E_ENV_FILE" <<'PY' >"$tmp"
 import json, sys
 from pathlib import Path
 
