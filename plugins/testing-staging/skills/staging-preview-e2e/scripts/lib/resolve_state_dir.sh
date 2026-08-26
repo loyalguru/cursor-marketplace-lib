@@ -52,9 +52,11 @@ e2e_resolve_state_dir() {
   legacy_dir="${SKILL_ROOT}/state/${slug}"
 
   # One-shot: move per-repo state out of the commit-SHA plugin cache.
+  # Use || return: callers invoke via `if ! e2e_resolve_state_dir`, which disables
+  # set -e for this function body (failed mkdir/mv would otherwise be swallowed).
   if [[ ! -e "$STATE_DIR" && -d "$legacy_dir" ]]; then
-    mkdir -p "$stable_root"
-    mv "$legacy_dir" "$STATE_DIR"
+    mkdir -p "$stable_root" || return 1
+    mv "$legacy_dir" "$STATE_DIR" || return 1
     echo "Migrated project state ${legacy_dir} → ${STATE_DIR}" >&2
   fi
 
