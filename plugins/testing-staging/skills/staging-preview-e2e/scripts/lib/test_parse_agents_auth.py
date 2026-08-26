@@ -162,6 +162,83 @@ class ParseAgentsAuthTest(unittest.TestCase):
         ):
             self.assertTrue(is_reserved_env_name(name), name)
 
+    def test_reserved_env_blocks_runner_internals_and_gconv(self) -> None:
+        # After e2e_load_env, run.sh uses SCRIPT_DIR / E2E_AUTH_MANIFEST for helpers.
+        # YAML must not overwrite those (or GCONV_PATH) once secrets are loaded.
+        for name in (
+            "SCRIPT_DIR",
+            "SKILL_ROOT",
+            "STATE_DIR",
+            "STATE_ROOT",
+            "_E2E_LIB_DIR",
+            "E2E_AUTH_MANIFEST",
+            "E2E_ENV_FILE",
+            "E2E_VARS_FILE",
+            "E2E_SUBST_ALLOW",
+            "E2E_AUTH_SUBST_ALLOW",
+            "GCONV_PATH",
+        ):
+            self.assertTrue(is_reserved_env_name(name), name)
+        self.assertFalse(is_reserved_env_name("e2eToken"))
+        self.assertFalse(is_reserved_env_name("script_dir"))
+
+    def test_rejects_script_dir_credential_key_and_maps_to(self) -> None:
+        with self.assertRaises(AuthParseError):
+            validate_manifest(
+                {
+                    "credentials": [
+                        {
+                            "key": "SCRIPT_DIR",
+                            "required": False,
+                            "maps_to": "apiKey",
+                            "default": "/tmp/evil-lib",
+                        }
+                    ],
+                    "smoke": {"headers": [{"name": "X-Api-Key", "value": "k"}]},
+                }
+            )
+        with self.assertRaises(AuthParseError):
+            validate_manifest(
+                {
+                    "credentials": [
+                        {
+                            "key": "API_KEY",
+                            "required": True,
+                            "maps_to": "SCRIPT_DIR",
+                        }
+                    ],
+                    "smoke": {"headers": [{"name": "X-Api-Key", "value": "k"}]},
+                }
+            )
+        with self.assertRaises(AuthParseError):
+            validate_manifest(
+                {
+                    "credentials": [
+                        {
+                            "key": "E2E_AUTH_MANIFEST",
+                            "required": False,
+                            "maps_to": "authManifest",
+                            "default": "/tmp/evil-manifest.json",
+                        }
+                    ],
+                    "smoke": {"headers": [{"name": "X-Api-Key", "value": "k"}]},
+                }
+            )
+        with self.assertRaises(AuthParseError):
+            validate_manifest(
+                {
+                    "credentials": [
+                        {
+                            "key": "GCONV_PATH",
+                            "required": False,
+                            "maps_to": "gconvPath",
+                            "default": "/tmp/evil-gconv",
+                        }
+                    ],
+                    "smoke": {"headers": [{"name": "X-Api-Key", "value": "k"}]},
+                }
+            )
+
     def test_rejects_proxy_credential_key_and_maps_to(self) -> None:
         with self.assertRaises(AuthParseError):
             validate_manifest(

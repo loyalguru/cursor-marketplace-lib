@@ -84,9 +84,19 @@ RESERVED_ENV_NAMES = frozenset(
         "PS4",
         "TERMCAP",
         "TERMINFO",
+        # Runner-internal paths / knobs — overwriting SCRIPT_DIR makes later
+        # python3 "${SCRIPT_DIR}/lib/..." execute attacker-controlled helpers.
+        "SCRIPT_DIR",
+        "SKILL_ROOT",
+        "STATE_DIR",
+        "STATE_ROOT",
+        "_E2E_LIB_DIR",
+        # glibc iconv module search path (remaining loader knob).
+        "GCONV_PATH",
     }
 )
-RESERVED_ENV_PREFIXES = ("DYLD_", "BASH_FUNC_", "LD_")
+# E2E_ covers E2E_AUTH_MANIFEST, E2E_ENV_FILE, E2E_SUBST_ALLOW, etc.
+RESERVED_ENV_PREFIXES = ("DYLD_", "BASH_FUNC_", "LD_", "E2E_")
 
 
 class AuthParseError(ValueError):

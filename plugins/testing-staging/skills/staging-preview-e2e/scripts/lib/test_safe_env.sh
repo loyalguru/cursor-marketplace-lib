@@ -50,6 +50,17 @@ assert_reserved OPENSSL_CONF
 assert_reserved OPENSSL_MODULES
 assert_reserved OPENSSL_ENGINES
 assert_reserved SSLKEYLOGFILE
+assert_reserved SCRIPT_DIR
+assert_reserved SKILL_ROOT
+assert_reserved STATE_DIR
+assert_reserved STATE_ROOT
+assert_reserved _E2E_LIB_DIR
+assert_reserved E2E_AUTH_MANIFEST
+assert_reserved E2E_ENV_FILE
+assert_reserved E2E_VARS_FILE
+assert_reserved E2E_SUBST_ALLOW
+assert_reserved E2E_AUTH_SUBST_ALLOW
+assert_reserved GCONV_PATH
 
 assert_allowed user
 assert_allowed home
@@ -61,6 +72,8 @@ assert_allowed User
 assert_allowed ld_preload
 assert_allowed baseUrl
 assert_allowed apiKey
+assert_allowed e2eToken
+assert_allowed script_dir
 
 # python3 -c / python3 - put cwd on sys.path and load site; a PR under QA can
 # plant json.py or sitecustomize.py after e2e_load_env exported secrets.
