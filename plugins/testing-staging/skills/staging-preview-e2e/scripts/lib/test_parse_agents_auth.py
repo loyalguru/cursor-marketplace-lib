@@ -124,6 +124,54 @@ class ParseAgentsAuthTest(unittest.TestCase):
         )
         self.assertEqual(data["credentials"][0]["key"], "A")
 
+    def test_rejects_reserved_credential_key(self) -> None:
+        with self.assertRaises(AuthParseError):
+            validate_manifest(
+                {
+                    "credentials": [
+                        {
+                            "key": "PATH",
+                            "required": False,
+                            "maps_to": "apiKey",
+                            "default": "/evil",
+                        }
+                    ],
+                    "smoke": {"headers": [{"name": "X-Api-Key", "value": "k"}]},
+                }
+            )
+
+    def test_rejects_reserved_maps_to(self) -> None:
+        with self.assertRaises(AuthParseError):
+            validate_manifest(
+                {
+                    "credentials": [
+                        {
+                            "key": "API_KEY",
+                            "required": True,
+                            "maps_to": "LD_PRELOAD",
+                        }
+                    ],
+                    "smoke": {"headers": [{"name": "X-Api-Key", "value": "k"}]},
+                }
+            )
+
+    def test_rejects_header_crlf_injection(self) -> None:
+        with self.assertRaises(AuthParseError):
+            validate_manifest(
+                {
+                    "credentials": [
+                        {"key": "API_KEY", "required": True, "maps_to": "apiKey"}
+                    ],
+                    "default_headers": [
+                        {
+                            "name": "Accept",
+                            "value": "application/json\r\nX-Injected: evil",
+                        }
+                    ],
+                    "smoke": {"headers": [{"name": "X-Api-Key", "value": "k"}]},
+                }
+            )
+
 
 if __name__ == "__main__":
     raise SystemExit(unittest.main())

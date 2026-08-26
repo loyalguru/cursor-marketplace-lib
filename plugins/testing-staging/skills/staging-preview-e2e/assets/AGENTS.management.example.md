@@ -10,7 +10,7 @@ PKCE + Bearer is optional when a case must mirror the Owner app.
 
 Secrets live only in the skill state directory, for example:
 
-`$SKILL_ROOT/state/loyal-guru-api/.env`
+`${XDG_STATE_HOME:-~/.local/state}/cursor-staging-preview-e2e/loyal-guru-api/.env`
 
 Never commit credentials to this repository.
 

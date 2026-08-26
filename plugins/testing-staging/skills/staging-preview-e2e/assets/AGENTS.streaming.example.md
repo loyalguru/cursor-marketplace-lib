@@ -9,7 +9,7 @@ Runner calls stay generic; credentials and headers are declared here.
 
 Secrets live only in the skill state directory, for example:
 
-`$SKILL_ROOT/state/loyal-guru-api-streaming-v2/.env`
+`${XDG_STATE_HOME:-~/.local/state}/cursor-staging-preview-e2e/loyal-guru-api-streaming-v2/.env`
 
 Never commit credentials to this repository.
 

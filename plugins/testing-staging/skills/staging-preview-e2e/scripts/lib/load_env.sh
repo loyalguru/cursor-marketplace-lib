@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # Load credentials from state .env according to auth.manifest.json (from AGENTS.md).
 
+# shellcheck source=/dev/null
+source "${SCRIPT_DIR}/lib/safe_env.sh"
+
 e2e_load_env() {
   if [[ ! -f "$E2E_ENV_FILE" ]]; then
     echo "DATA_STALE: missing ${E2E_ENV_FILE}" >&2
@@ -66,6 +69,11 @@ PY
     if [[ ! "$key" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
       rm -f "$tmp"
       echo "DATA_STALE: unsafe env key ${key}" >&2
+      return 2
+    fi
+    if e2e_is_reserved_env_key "$key"; then
+      rm -f "$tmp"
+      echo "DATA_STALE: reserved env key ${key}" >&2
       return 2
     fi
     export "${key}=${value}"

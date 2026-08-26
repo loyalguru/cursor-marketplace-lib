@@ -200,9 +200,17 @@ staging-preview-e2e/
   scripts/           # bootstrap, check_tools, run, decide_preview, …
   references/        # coverage, http, preview, project-config, reporting
   assets/            # empty templates only
-  state/{repo}/      # per-repo URL/secrets/fixtures (.gitignore)
+  state/.gitignore   # keeps package tree empty of secrets
 ```
 
+Mutable per-repo state (credentials, `preview.json`) lives outside the plugin
+cache by default:
+
+`${XDG_STATE_HOME:-~/.local/state}/cursor-staging-preview-e2e/{repo}/`
+
+Override with `E2E_STATE_DIR` (one project) or `E2E_STATE_ROOT` (parent of all
+`{repo}/` dirs). Legacy `${SKILL_ROOT}/state/{repo}/` is migrated once on
+resolve.
 ## Common mistakes
 
 | Mistake | Do instead |

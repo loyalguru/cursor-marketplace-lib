@@ -7,7 +7,8 @@ The staging-preview-e2e skill **refuses** first-run setup until this YAML parses
 
 ## Authentication
 
-Secrets live only in the skill `state/{repo}/.env` — never commit them here.
+Secrets live only in the skill per-repo state `.env` (XDG state dir by
+default) — never commit them here.
 
 ```yaml
 auth_mode: machine_headers   # or user_basic | user_bearer_session

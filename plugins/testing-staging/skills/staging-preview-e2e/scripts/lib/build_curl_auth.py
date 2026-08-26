@@ -15,9 +15,21 @@ import os
 import sys
 from pathlib import Path
 
+from parse_agents_auth import assert_safe_header_name, assert_safe_header_value
+
 
 def resolve(name: str) -> str:
     return os.environ.get(name, "")
+
+
+def _safe_header(name: str, value: str) -> tuple[str, str]:
+    try:
+        return (
+            assert_safe_header_name(name, "header name"),
+            assert_safe_header_value(value, "header value"),
+        )
+    except ValueError as error:
+        raise SystemExit(str(error)) from error
 
 
 def emit_auth(
@@ -33,10 +45,10 @@ def emit_auth(
 
     if include_default_headers:
         for h in manifest.get("default_headers") or []:
-            name = h["name"]
+            name, value = _safe_header(h["name"], h["value"])
             if name.lower() in skip:
                 continue
-            out.append(("H", name, h["value"]))
+            out.append(("H", name, value))
             skip.add(name.lower())
 
     if not include_smoke:
@@ -51,6 +63,10 @@ def emit_auth(
             password = resolve(basic["password_from"])
             if not user or not password:
                 raise SystemExit("basic auth user/password empty in env")
+            if "\r" in user or "\n" in user or "\0" in user:
+                raise SystemExit("unsafe basic auth user")
+            if "\r" in password or "\n" in password or "\0" in password:
+                raise SystemExit("unsafe basic auth password")
             out.append(("U", f"{user}:{password}", ""))
 
     for item in smoke.get("headers") or []:
@@ -69,6 +85,7 @@ def emit_auth(
             continue
         if not header_name:
             raise SystemExit("missing smoke header name")
+        header_name, header_value = _safe_header(header_name, header_value)
         if header_name.lower() in skip:
             continue
         if not header_value and when != "set":

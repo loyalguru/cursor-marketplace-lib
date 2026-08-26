@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# shellcheck source=/dev/null
+source "${SCRIPT_DIR}/lib/safe_env.sh"
+
 e2e_load_variables() {
   if [[ ! -f "$E2E_VARS_FILE" ]]; then
     echo "DATA_STALE: missing ${E2E_VARS_FILE}" >&2
@@ -22,6 +25,11 @@ e2e_load_variables() {
     if [[ ! "$key" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
       rm -f "$tmp"
       echo "DATA_STALE: unsafe variable name from ${E2E_VARS_FILE}: ${key}" >&2
+      return 2
+    fi
+    if e2e_is_reserved_env_key "$key"; then
+      rm -f "$tmp"
+      echo "DATA_STALE: reserved variable name from ${E2E_VARS_FILE}: ${key}" >&2
       return 2
     fi
     export "${key}=${value}"

@@ -15,10 +15,89 @@ FENCE_RE = re.compile(
     re.IGNORECASE | re.DOTALL,
 )
 SAFE_IDENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+# RFC 7230 token — no separators, CR, LF, or whitespace.
+HEADER_NAME_RE = re.compile(r"^[!#$%&'*+\-.0-9A-Z^_`a-z|~]+$")
+
+# Names that must never be exported into the runner process from AGENTS.md /
+# preview.json (hijack PATH/LD_PRELOAD/etc.).
+RESERVED_ENV_NAMES = frozenset(
+    {
+        "PATH",
+        "LD_PRELOAD",
+        "LD_LIBRARY_PATH",
+        "LD_AUDIT",
+        "DYLD_INSERT_LIBRARIES",
+        "DYLD_LIBRARY_PATH",
+        "DYLD_FRAMEWORK_PATH",
+        "PYTHONPATH",
+        "PYTHONHOME",
+        "PYTHONSTARTUP",
+        "PYTHONUSERBASE",
+        "BASH_ENV",
+        "ENV",
+        "IFS",
+        "CDPATH",
+        "SHELLOPTS",
+        "BASHOPTS",
+        "HOME",
+        "USER",
+        "LOGNAME",
+        "SHELL",
+        "TMPDIR",
+        "TEMP",
+        "TMP",
+        "SSL_CERT_FILE",
+        "SSL_CERT_DIR",
+        "CURL_CA_BUNDLE",
+        "REQUESTS_CA_BUNDLE",
+        "NODE_OPTIONS",
+        "NODE_PATH",
+        "PERL5LIB",
+        "PERL5OPT",
+        "RUBYLIB",
+        "RUBYOPT",
+        "GIT_DIR",
+        "GIT_WORK_TREE",
+        "GIT_OBJECT_DIRECTORY",
+        "GH_TOKEN",
+        "GH_HOST",
+        "GITHUB_TOKEN",
+        "PROMPT_COMMAND",
+        "PS4",
+        "TERMCAP",
+        "TERMINFO",
+    }
+)
+RESERVED_ENV_PREFIXES = ("DYLD_", "BASH_FUNC_", "LD_")
 
 
 class AuthParseError(ValueError):
     pass
+
+
+def is_reserved_env_name(name: str) -> bool:
+    upper = name.upper()
+    if upper in RESERVED_ENV_NAMES:
+        return True
+    return upper.startswith(RESERVED_ENV_PREFIXES)
+
+
+def assert_safe_header_name(name: str, where: str) -> str:
+    if (
+        not name
+        or "\r" in name
+        or "\n" in name
+        or "\0" in name
+        or not HEADER_NAME_RE.fullmatch(name)
+    ):
+        raise AuthParseError(f"{where}: unsafe header name")
+    return name
+
+
+def assert_safe_header_value(value: str, where: str) -> str:
+    if "\r" in value or "\n" in value or "\0" in value:
+        raise AuthParseError(f"{where}: unsafe header value")
+    return value
 
 
 def _strip_comment(line: str) -> str:
@@ -195,8 +274,14 @@ def validate_manifest(data: Any) -> dict[str, Any]:
         maps_to = item.get("maps_to")
         if not isinstance(key, str) or not SAFE_IDENT.fullmatch(key):
             raise AuthParseError(f"credentials[{i}].key must be a safe identifier")
+        if is_reserved_env_name(key):
+            raise AuthParseError(f"credentials[{i}].key is a reserved env name: {key}")
         if not isinstance(maps_to, str) or not SAFE_IDENT.fullmatch(maps_to):
             raise AuthParseError(f"credentials[{i}].maps_to must be a safe identifier")
+        if is_reserved_env_name(maps_to):
+            raise AuthParseError(
+                f"credentials[{i}].maps_to is a reserved env name: {maps_to}"
+            )
         if maps_to in maps:
             raise AuthParseError(f"duplicate maps_to: {maps_to}")
         maps.add(maps_to)
@@ -226,6 +311,8 @@ def validate_manifest(data: Any) -> dict[str, Any]:
             raise AuthParseError(f"default_headers[{i}].name required")
         if not isinstance(value, str):
             raise AuthParseError(f"default_headers[{i}].value must be a string")
+        assert_safe_header_name(name, f"default_headers[{i}].name")
+        assert_safe_header_value(value, f"default_headers[{i}].value")
         default_headers.append({"name": name, "value": value})
 
     smoke = data.get("smoke") or {}
@@ -241,11 +328,19 @@ def validate_manifest(data: Any) -> dict[str, Any]:
         password_from = basic.get("password_from")
         if not isinstance(user_from, str) or not SAFE_IDENT.fullmatch(user_from):
             raise AuthParseError("smoke.basic.user_from must be a safe maps_to name")
+        if is_reserved_env_name(user_from):
+            raise AuthParseError(
+                f"smoke.basic.user_from is a reserved env name: {user_from}"
+            )
         if not isinstance(password_from, str) or not SAFE_IDENT.fullmatch(
             password_from
         ):
             raise AuthParseError(
                 "smoke.basic.password_from must be a safe maps_to name"
+            )
+        if is_reserved_env_name(password_from):
+            raise AuthParseError(
+                f"smoke.basic.password_from is a reserved env name: {password_from}"
             )
         smoke_out["basic"] = {
             "user_from": user_from,
@@ -262,25 +357,39 @@ def validate_manifest(data: Any) -> dict[str, Any]:
                 raise AuthParseError(f"smoke.headers[{i}] must be a mapping")
             entry_h: dict[str, Any] = {}
             if "name" in item:
-                entry_h["name"] = str(item["name"])
+                entry_h["name"] = assert_safe_header_name(
+                    str(item["name"]), f"smoke.headers[{i}].name"
+                )
             if "name_from" in item:
                 nf = item["name_from"]
                 if not isinstance(nf, str) or not SAFE_IDENT.fullmatch(nf):
                     raise AuthParseError(
                         f"smoke.headers[{i}].name_from must be a safe identifier"
                     )
+                if is_reserved_env_name(nf):
+                    raise AuthParseError(
+                        f"smoke.headers[{i}].name_from is a reserved env name: {nf}"
+                    )
                 entry_h["name_from"] = nf
             if "value" in item:
-                entry_h["value"] = str(item["value"])
+                entry_h["value"] = assert_safe_header_value(
+                    str(item["value"]), f"smoke.headers[{i}].value"
+                )
             if "value_from" in item:
                 vf = item["value_from"]
                 if not isinstance(vf, str) or not SAFE_IDENT.fullmatch(vf):
                     raise AuthParseError(
                         f"smoke.headers[{i}].value_from must be a safe identifier"
                     )
+                if is_reserved_env_name(vf):
+                    raise AuthParseError(
+                        f"smoke.headers[{i}].value_from is a reserved env name: {vf}"
+                    )
                 entry_h["value_from"] = vf
             if "value_prefix" in item:
-                entry_h["value_prefix"] = str(item["value_prefix"])
+                entry_h["value_prefix"] = assert_safe_header_value(
+                    str(item["value_prefix"]), f"smoke.headers[{i}].value_prefix"
+                )
             if item.get("when"):
                 entry_h["when"] = str(item["when"])
             if "name" not in entry_h and "name_from" not in entry_h:
@@ -306,6 +415,10 @@ def validate_manifest(data: Any) -> dict[str, Any]:
     for i, name in enumerate(raw_session):
         if not isinstance(name, str) or not SAFE_IDENT.fullmatch(name):
             raise AuthParseError(f"session_variables[{i}] must be a safe identifier")
+        if is_reserved_env_name(name):
+            raise AuthParseError(
+                f"session_variables[{i}] is a reserved env name: {name}"
+            )
         session_variables.append(name)
 
     # When true, run.sh adds smoke auth + default_headers to every request

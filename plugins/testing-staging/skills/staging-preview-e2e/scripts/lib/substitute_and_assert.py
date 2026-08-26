@@ -15,6 +15,7 @@ from urllib.parse import urlparse, urljoin
 
 VAR_RE = re.compile(r"\{\{\s*([A-Za-z_][A-Za-z0-9_]*)\s*\}\}")
 SAFE_NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+HEADER_NAME_RE = re.compile(r"^[!#$%&'*+\-.0-9A-Z^_`a-z|~]+$")
 
 # Always eligible for {{var}} substitution when present in the process env.
 # Project auth maps_to names arrive via E2E_SUBST_ALLOW / E2E_AUTH_SUBST_ALLOW.
@@ -26,6 +27,26 @@ CORE_KEYS = frozenset(
         "SMOKE_PATH",
     }
 )
+
+
+def validate_http_header(name: str, value: str) -> None:
+    """Reject CR/LF/NUL and non-token header names (curl -H injection)."""
+    if (
+        not name
+        or "\r" in name
+        or "\n" in name
+        or "\0" in name
+        or not HEADER_NAME_RE.fullmatch(name)
+    ):
+        raise ValueError("unsafe HTTP header name")
+    if "\r" in value or "\n" in value or "\0" in value:
+        raise ValueError("unsafe HTTP header value")
+
+
+def reject_curl_file_body(body: str) -> None:
+    """Reject bodies that curl -d would treat as @filepath uploads."""
+    if body.startswith("@"):
+        raise ValueError("refusing curl @filepath body")
 
 
 def subst_env() -> dict[str, str]:
@@ -202,8 +223,26 @@ def main() -> int:
     if command == "redact-log":
         print(redact_for_log(sys.stdin.read()))
         return 0
+    if command == "check-header":
+        if len(sys.argv) != 4:
+            print("usage: check-header <name> <value>", file=sys.stderr)
+            return 2
+        try:
+            validate_http_header(sys.argv[2], sys.argv[3])
+        except ValueError as error:
+            print(str(error), file=sys.stderr)
+            return 1
+        return 0
+    if command == "check-body":
+        try:
+            reject_curl_file_body(sys.stdin.read())
+        except ValueError as error:
+            print(str(error), file=sys.stderr)
+            return 1
+        return 0
     print(
-        "usage: substitute_and_assert.py substitute|assert|check-url|redact-log ...",
+        "usage: substitute_and_assert.py "
+        "substitute|assert|check-url|check-header|check-body|redact-log ...",
         file=sys.stderr,
     )
     return 2

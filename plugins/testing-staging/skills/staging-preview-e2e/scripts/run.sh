@@ -163,6 +163,12 @@ for ((i = 0; i < CASE_COUNT; i++)); do
       header_err=1
       break
     fi
+    if ! python3 "${SCRIPT_DIR}/lib/substitute_and_assert.py" check-header \
+      "$header_name" "$header_value"; then
+      echo -e "FAIL\t-\t${name}\tunsafe header ${header_name}"
+      header_err=1
+      break
+    fi
     curl_headers+=(-H "${header_name}: ${header_value}")
     case_header_names+=("$header_name")
   done
@@ -201,6 +207,11 @@ for ((i = 0; i < CASE_COUNT; i++)); do
       fail=$((fail + 1))
       continue
     fi
+    if ! printf '%s' "$body" | python3 "${SCRIPT_DIR}/lib/substitute_and_assert.py" check-body; then
+      echo -e "FAIL\t-\t${name}\trefusing curl @filepath body"
+      fail=$((fail + 1))
+      continue
+    fi
   fi
 
   response_file="$(mktemp)"
@@ -208,7 +219,7 @@ for ((i = 0; i < CASE_COUNT; i++)); do
     code="$(curl -sS -o "$response_file" -w '%{http_code}' \
       "${curl_extra[@]+${curl_extra[@]}}" \
       "${curl_headers[@]+${curl_headers[@]}}" \
-      -X "$method" "$url" -d "$body" || echo "000")"
+      -X "$method" "$url" --data-raw "$body" || echo "000")"
   else
     code="$(curl -sS -o "$response_file" -w '%{http_code}' \
       "${curl_extra[@]+${curl_extra[@]}}" \

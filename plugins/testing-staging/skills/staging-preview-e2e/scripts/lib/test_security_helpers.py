@@ -85,6 +85,35 @@ class SubstituteSecurityTests(unittest.TestCase):
         self.assertNotIn("secret-value", text)
         self.assertIn("omitted", text)
 
+    def test_rejects_header_crlf(self) -> None:
+        with self.assertRaises(ValueError):
+            sa.validate_http_header(
+                "Accept", "application/json\r\nX-Injected: evil"
+            )
+
+    def test_rejects_at_file_body(self) -> None:
+        with self.assertRaises(ValueError):
+            sa.reject_curl_file_body("@/etc/passwd")
+
+
+class BuildCurlAuthSecurityTests(unittest.TestCase):
+    def test_emit_rejects_injected_default_header(self) -> None:
+        import build_curl_auth as bca
+
+        with self.assertRaises(SystemExit):
+            bca.emit_auth(
+                {
+                    "default_headers": [
+                        {
+                            "name": "Accept",
+                            "value": "ok\r\nX-Injected: evil",
+                        }
+                    ],
+                    "smoke": {},
+                },
+                include_smoke=False,
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

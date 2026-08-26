@@ -57,7 +57,9 @@ La skill se distribuye con el plugin **testing-staging** del marketplace Loyal G
 1. En Cursor, instala o actualiza el plugin **Testing Staging**.
 2. Abre una sesión de agente nueva para que descubra `staging-preview-e2e`.
 3. `SKILL_ROOT` es el directorio que contiene este `SKILL.md` (cache del plugin). Los scripts lo resuelven solos desde `scripts/`.
-4. El estado mutable (`state/{repo}/`) es **por persona**; no se commitea.
+4. El estado mutable vive fuera del cache del plugin (por defecto
+   `${XDG_STATE_HOME:-~/.local/state}/cursor-staging-preview-e2e/{repo}/`);
+   no se pierde al actualizar el marketplace. No se commitea.
 
 Cada persona sigue necesitando su propio `state/` local (no commitear secretos).
 
@@ -104,7 +106,7 @@ Detalle: [`references/first-run-setup.md`](references/first-run-setup.md).
 Cada repo usa automáticamente `state/{nombre-del-repo}/` (slug desde `git remote get-url origin`, sin owner). Override opcional:
 
 ```bash
-export E2E_STATE_DIR="$SKILL_ROOT/state/mi-api"
+export E2E_STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/cursor-staging-preview-e2e/mi-api"
 "$SKILL_ROOT/scripts/bootstrap.sh"
 ```
 
@@ -250,7 +252,8 @@ Variables de entorno del checker:
 |----------|--------|
 | `CHECK_TOOLS_INSTALL=1` | Permite install no interactivo de tools required |
 | `CHECK_TOOLS_NO_INSTALL=1` | Solo verificar; no instalar |
-| `E2E_STATE_DIR` | Ruta absoluta al state de un proyecto (override del auto `state/{repo}/`) |
+| `E2E_STATE_DIR` | Ruta absoluta al state de un proyecto (override del auto `{repo}/`) |
+| `E2E_STATE_ROOT` | Directorio padre estable de todos los `{repo}/` (default XDG state) |
 
 **Nunca** empaquetar ni compartir `state/{repo}/.env` real entre empresas o equipos.
 

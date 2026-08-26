@@ -9,10 +9,14 @@ Basic), Accept headers, and login procedures live in the app repo’s
 from the project ([infer-project-auth.md](infer-project-auth.md)), then asks
 only for secret values ([first-run-setup.md](first-run-setup.md)).
 
-State is grouped by **git repo name** (from `origin`, without owner):
+State is grouped by **git repo name** (from `origin`, without owner) under a
+**stable** directory (not the marketplace plugin cache):
 
-`git@github.com:loyalguru/loyal-guru-api.git` → `state/loyal-guru-api/`
+`git@github.com:loyalguru/loyal-guru-api.git` →
+`${XDG_STATE_HOME:-~/.local/state}/cursor-staging-preview-e2e/loyal-guru-api/`
 
+Override with `E2E_STATE_DIR` or `E2E_STATE_ROOT`. Docs still say `state/{repo}/`
+as shorthand for that per-project directory.
 ## Bootstrap
 
 Run from the application repo (so `origin` and `e2e_tests/AGENTS.md` resolve):

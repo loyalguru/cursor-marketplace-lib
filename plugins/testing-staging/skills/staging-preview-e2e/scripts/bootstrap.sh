@@ -5,7 +5,6 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SKILL_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-STATE_ROOT="${SKILL_ROOT}/state"
 
 # shellcheck source=/dev/null
 source "${SCRIPT_DIR}/lib/resolve_state_dir.sh"
@@ -13,6 +12,9 @@ source "${SCRIPT_DIR}/lib/resolve_state_dir.sh"
 if ! e2e_resolve_state_dir; then
   exit 1
 fi
+
+# STATE_ROOT is set by resolve (stable XDG path). Also clean legacy skill-cache state.
+LEGACY_STATE_ROOT="${SKILL_ROOT}/state"
 
 repo_root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
 AGENTS_PATH="${E2E_AGENTS_PATH:-}"
@@ -31,8 +33,9 @@ fi
 
 umask 077
 
-# One-shot: migrate flat state/ into state/{repo}/ when present.
+# One-shot: migrate flat state/ into state/{repo}/ when present (stable + legacy).
 python3 "${SCRIPT_DIR}/lib/migrate_flat_state.py" "$STATE_ROOT" "$STATE_DIR"
+python3 "${SCRIPT_DIR}/lib/migrate_flat_state.py" "$LEGACY_STATE_ROOT" "$STATE_DIR"
 
 mkdir -p "${STATE_DIR}/variables"
 
@@ -82,6 +85,10 @@ fi
 if [[ -f "${STATE_ROOT}/preview.env" ]]; then
   rm -f "${STATE_ROOT}/preview.env"
   echo "Removed ${STATE_ROOT}/preview.env"
+fi
+if [[ -f "${LEGACY_STATE_ROOT}/preview.env" ]]; then
+  rm -f "${LEGACY_STATE_ROOT}/preview.env"
+  echo "Removed ${LEGACY_STATE_ROOT}/preview.env"
 fi
 
 echo "Project state: ${STATE_DIR}"
