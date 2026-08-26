@@ -151,6 +151,17 @@ class ParseAgentsAuthTest(unittest.TestCase):
         ):
             self.assertTrue(is_reserved_env_name(name), name)
 
+    def test_reserved_env_blocks_openssl_process_identity(self) -> None:
+        # OpenSSL/curl process identity — YAML must not point OPENSSL_CONF at a
+        # repo-controlled config/provider or set SSLKEYLOGFILE to capture TLS keys.
+        for name in (
+            "OPENSSL_CONF",
+            "OPENSSL_MODULES",
+            "OPENSSL_ENGINES",
+            "SSLKEYLOGFILE",
+        ):
+            self.assertTrue(is_reserved_env_name(name), name)
+
     def test_rejects_proxy_credential_key_and_maps_to(self) -> None:
         with self.assertRaises(AuthParseError):
             validate_manifest(
@@ -188,6 +199,49 @@ class ParseAgentsAuthTest(unittest.TestCase):
                             "required": False,
                             "maps_to": "curlHome",
                             "default": "/tmp/evil-curlrc",
+                        }
+                    ],
+                    "smoke": {"headers": [{"name": "X-Api-Key", "value": "k"}]},
+                }
+            )
+
+    def test_rejects_openssl_credential_key_and_maps_to(self) -> None:
+        with self.assertRaises(AuthParseError):
+            validate_manifest(
+                {
+                    "credentials": [
+                        {
+                            "key": "OPENSSL_CONF",
+                            "required": False,
+                            "maps_to": "opensslConf",
+                            "default": "/tmp/evil.cnf",
+                        }
+                    ],
+                    "smoke": {"headers": [{"name": "X-Api-Key", "value": "k"}]},
+                }
+            )
+        with self.assertRaises(AuthParseError):
+            validate_manifest(
+                {
+                    "credentials": [
+                        {
+                            "key": "API_KEY",
+                            "required": True,
+                            "maps_to": "SSLKEYLOGFILE",
+                        }
+                    ],
+                    "smoke": {"headers": [{"name": "X-Api-Key", "value": "k"}]},
+                }
+            )
+        with self.assertRaises(AuthParseError):
+            validate_manifest(
+                {
+                    "credentials": [
+                        {
+                            "key": "OPENSSL_MODULES",
+                            "required": False,
+                            "maps_to": "opensslModules",
+                            "default": "/tmp/evil-modules",
                         }
                     ],
                     "smoke": {"headers": [{"name": "X-Api-Key", "value": "k"}]},

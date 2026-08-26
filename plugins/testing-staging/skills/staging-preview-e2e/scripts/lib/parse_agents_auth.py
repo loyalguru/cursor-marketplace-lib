@@ -50,6 +50,11 @@ RESERVED_ENV_NAMES = frozenset(
         "SSL_CERT_DIR",
         "CURL_CA_BUNDLE",
         "REQUESTS_CA_BUNDLE",
+        # OpenSSL / curl process identity (config, providers, TLS key log).
+        "OPENSSL_CONF",
+        "OPENSSL_MODULES",
+        "OPENSSL_ENGINES",
+        "SSLKEYLOGFILE",
         # curl proxy / config routing (case variants: curl reads both).
         "HTTP_PROXY",
         "HTTPS_PROXY",

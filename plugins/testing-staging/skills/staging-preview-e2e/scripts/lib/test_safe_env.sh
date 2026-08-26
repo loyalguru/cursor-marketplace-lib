@@ -46,6 +46,10 @@ assert_reserved CURL_HOME
 assert_reserved XDG_CONFIG_HOME
 assert_reserved SSL_CERT_FILE
 assert_reserved CURL_CA_BUNDLE
+assert_reserved OPENSSL_CONF
+assert_reserved OPENSSL_MODULES
+assert_reserved OPENSSL_ENGINES
+assert_reserved SSLKEYLOGFILE
 
 assert_allowed user
 assert_allowed home
