@@ -1,0 +1,4 @@
+scripts/lib/__pycache__/
+state/**
+!state/.gitignore
+!state/.gitkeep
